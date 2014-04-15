@@ -6,7 +6,7 @@
 
 /** \file wall.cc
  * \brief Function implementations for the derived wall classes. */
-
+#include "ofMain.h"
 #include "wall.h"
 
 namespace voro {
@@ -15,7 +15,7 @@ namespace voro {
  * \param[in,out] (x,y,z) the vector to test.
  * \return True if the point is inside, false if the point is outside. */
 bool wall_sphere::point_inside(double x,double y,double z) {
-	return (x-xc)*(x-xc)+(y-yc)*(y-yc)+(z-zc)*(z-zc)<rc*rc;
+    return (x-xc)*(x-xc)+(y-yc)*(y-yc)+(z-zc)*(z-zc)< rc*rc;
 }
 
 /** Cuts a cell by the sphere wall object. The spherical wall is approximated by
@@ -27,7 +27,8 @@ bool wall_sphere::point_inside(double x,double y,double z) {
  * \return True if the cell still exists, false if the cell is deleted. */
 template<class v_cell>
 bool wall_sphere::cut_cell_base(v_cell &c,double x,double y,double z) {
-	double xd=x-xc,yd=y-yc,zd=z-zc,dq=xd*xd+yd*yd+zd*zd;
+	
+    double xd=x-xc,yd=y-yc,zd=z-zc,dq=xd*xd+yd*yd+zd*zd;
 	if (dq>1e-5) {
 		dq=2*(sqrt(dq)*rc-dq);
 		return c.nplane(xd,yd,zd,dq,w_id);
@@ -35,6 +36,62 @@ bool wall_sphere::cut_cell_base(v_cell &c,double x,double y,double z) {
 	return true;
 }
 
+/** Tests to see whether a point is inside the sphere wall object.
+ * \param[in,out] (x,y,z) the vector to test.
+ * \return True if the point is inside, false if the point is outside. */
+bool wall_noisesphere::point_inside(double x,double y,double z) {
+    //    ofVec2f axis, xy, yz, zx;
+    //    axis.set(0,0);
+    //    xy.set(x, y);
+    //    yz.set(y, z);
+    //    zx.set(z, x);
+    //
+    //    float angleXY = axis.angle(xy);
+    //    float angleYZ = axis.angle(yz);
+    //    float angleZX = axis.angle(zx);
+    //
+    //
+    //    double rcNoise = rc * ofNoise(angleXY,angleYZ,angleZX, ofGetElapsedTimef()*0.2);
+    double rcNoise = rc * (1.0 - noise_scale) + rc * ofNoise(ofVec3f(0,1,0).angle(ofVec3f(x,y,z)) * complexity, ofGetElapsedTimef() * time_scale) * noise_scale;
+    return (x-xc)*(x-xc)+(y-yc)*(y-yc)+(z-zc)*(z-zc)< rcNoise*rcNoise;
+
+    
+}
+
+/** Cuts a cell by the sphere wall object. The spherical wall is approximated by
+ * a single plane applied at the point on the sphere which is closest to the center
+ * of the cell. This works well for particle arrangements that are packed against
+ * the wall, but loses accuracy for sparse particle distributions.
+ * \param[in,out] c the Voronoi cell to be cut.
+ * \param[in] (x,y,z) the location of the Voronoi cell.
+ * \return True if the cell still exists, false if the cell is deleted. */
+template<class v_cell>
+bool wall_noisesphere::cut_cell_base(v_cell &c,double x,double y,double z) {
+    
+    //    ofVec2f axis, xy, yz, zx;
+    //    axis.set(0,0);
+    //    xy.set(x, y);
+    //    yz.set(y, z);
+    //    zx.set(z, x);
+    //
+    //    float angleXY = axis.angle(xy);
+    //    float angleYZ = axis.angle(yz);
+    //    float angleZX = axis.angle(zx);
+    //
+    //
+    //    double rcNoise = rc * ofNoise(angleXY,angleYZ,angleZX, ofGetElapsedTimef()*0.2);
+    
+    double rcNoise = rc * (1.0 - noise_scale) + rc * ofNoise(ofVec3f(0,1,0).angle(ofVec3f(x,y,z)) * complexity, ofGetElapsedTimef() * time_scale) * noise_scale;
+    double xd=x-xc,yd=y-yc,zd=z-zc,dq=xd*xd+yd*yd+zd*zd;
+    if (dq>1e-5) {
+        dq=2*(sqrt(dq)*rcNoise-dq);
+        return c.nplane(xd,yd,zd,dq,w_id);
+    }
+    return true;
+}
+
+    
+    
 /** Tests to see whether a point is inside the plane wall object.
  * \param[in] (x,y,z) the vector to test.
  * \return True if the point is inside, false if the point is outside. */

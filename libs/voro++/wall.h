@@ -38,6 +38,35 @@ struct wall_sphere : public wall {
 		const double xc,yc,zc,rc;
 };
 
+   //!!!! Jaosn ADDED
+/** \brief A class representing a noise warped spherical wall object.
+ *
+ * This class represents a spherical wall object. */
+struct wall_noisesphere : public wall {
+public:
+    /** Constructs a spherical wall object.
+     * \param[in] w_id_ an ID number to associate with the wall for
+     *		    neighbor tracking.
+     * \param[in] (xc_,yc_,zc_) a position vector for the sphere's
+     * 			    center.
+     * \param[in] rc_ the radius of the sphere. */
+    wall_noisesphere(double xc_,double yc_,double zc_,double rc_, double ns_, double ts_, double c_, int w_id_=-99)
+    : w_id(w_id_), xc(xc_), yc(yc_), zc(zc_), rc(rc_), noise_scale(ns_), time_scale(ts_), complexity(c_) {}
+    bool point_inside(double x,double y,double z);
+    template<class v_cell>
+    bool cut_cell_base(v_cell &c,double x,double y,double z);
+    bool cut_cell(voronoicell &c,double x,double y,double z) {return cut_cell_base(c,x,y,z);}
+    bool cut_cell(voronoicell_neighbor &c,double x,double y,double z) {return cut_cell_base(c,x,y,z);}
+private:
+    const int w_id;
+    const double xc,yc,zc,rc;
+    const double noise_scale, time_scale, complexity;
+    
+};
+    
+    
+    
+    
 /** \brief A class representing a plane wall object.
  *
  * This class represents a single plane wall object. */
